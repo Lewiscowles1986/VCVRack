@@ -1,0 +1,144 @@
+language:
+  - cpp
+notifications:
+  email:
+    on_success: change
+    on_fail: change
+git:
+  depth: 1
+matrix:
+  include:
+  - os: linux
+    compiler: clang
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-5
+        - g++-5
+        - libstdc++6
+        - build-essential
+        - git
+        - curl
+        - cmake
+        - libx11-dev
+        - libglu1-mesa-dev
+        - libxrandr-dev
+        - libxinerama-dev
+        - libxcursor-dev
+        - libxi-dev
+        - zlib1g-dev
+        - libasound2-dev
+        - libgtk2.0-dev
+        - libjack-jackd2-dev
+  - os: linux
+    env:
+    - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-5
+        - g++-5
+        - libstdc++6
+        - build-essential
+        - git
+        - curl
+        - cmake
+        - libx11-dev
+        - libglu1-mesa-dev
+        - libxrandr-dev
+        - libxinerama-dev
+        - libxcursor-dev
+        - libxi-dev
+        - zlib1g-dev
+        - libasound2-dev
+        - libgtk2.0-dev
+        - libjack-jackd2-dev
+  - os: linux
+    env:
+    - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-6
+        - g++-6
+        - libstdc++6
+        - build-essential
+        - git
+        - curl
+        - cmake
+        - libx11-dev
+        - libglu1-mesa-dev
+        - libxrandr-dev
+        - libxinerama-dev
+        - libxcursor-dev
+        - libxi-dev
+        - zlib1g-dev
+        - libasound2-dev
+        - libgtk2.0-dev
+        - libjack-jackd2-dev
+  - os: linux
+    env:
+    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-7
+        - g++-7
+        - libstdc++6
+        - build-essential
+        - git
+        - curl
+        - cmake
+        - libx11-dev
+        - libglu1-mesa-dev
+        - libxrandr-dev
+        - libxinerama-dev
+        - libxcursor-dev
+        - libxi-dev
+        - zlib1g-dev
+        - libasound2-dev
+        - libgtk2.0-dev
+        - libjack-jackd2-dev
+  - os: linux
+    env:
+    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-8
+        - g++-8
+        - libstdc++6
+        - build-essential
+        - git
+        - curl
+        - cmake
+        - libx11-dev
+        - libglu1-mesa-dev
+        - libxrandr-dev
+        - libxinerama-dev
+        - libxcursor-dev
+        - libxi-dev
+        - zlib1g-dev
+        - libasound2-dev
+        - libgtk2.0-dev
+        - libjack-jackd2-dev
+  - os: osx
+    osx_image: xcode9.4
+
+before_install:
+    - eval "${MATRIX_EVAL}"
+
+script:
+    - git submodule update --init --recursive
+    - make dep -j4
+    - make -j4
