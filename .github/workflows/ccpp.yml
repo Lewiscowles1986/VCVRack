@@ -28,15 +28,19 @@ jobs:
         - os: ubuntu-18.04
           cc: gcc-7
           cxx: g++-7
+        - os: macOS-latest
+          cc: clang
+          cxx: n/a
       max-parallel: 4
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install PPA's
+    - name: Install PPA's (linux)
       run:  sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+      if: runner.os == 'Linux'
     - name: Install libraries (linux)
       run: sudo apt-get install -yqq ${{ matrix.cc }} ${{ matrix.cxx }} libstdc++6 build-essential git curl cmake libx11-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev zlib1g-dev libasound2-dev libgtk2.0-dev libjack-jackd2-dev
-      if: ("${{ runner.os }}" STREQUAL "Linux")
+      if: runner.os == 'Linux'
     - name: fetch submodules
       run: git submodule update --init --recursive
     - name: make dependencies (linux)
@@ -44,16 +48,16 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: make dep -j4
-      if: ("${{ runner.os }}" STREQUAL "Linux")
+      if: runner.os == 'Linux'
     - name: compile (linux)
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: make -j4
-      if: ("${{ runner.os }}" STREQUAL "Linux")
+      if: runner.os == 'Linux'
     - name: make dependencies (non-linux)
       run: make dep -j4
-      if: ("${{ runner.os }}" STREQUAL "Linux") == false
+      if: runner.os != 'Linux'
     - name: compile (non-linux)
       run: make -j4
-      if: ("${{ runner.os }}" STREQUAL "Linux") == false
+      if: runner.os != 'Linux'
