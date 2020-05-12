@@ -1,0 +1,39 @@
+name: C/C++ CI
+
+on:
+  release:
+  push:
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: 0 6 * * *
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-latest]
+        cc: [gcc-5, gcc-6, gcc-7, gcc-8]
+        cxx: [g++-5, g++-6, g++-7, g++-8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install PPA's
+      run:  sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+    - name: Install libraries
+      run: sudo apt-get install -yqq ${{ matrix.cc }} ${{ matrix.cxx }} libstdc++6 build-essential git curl cmake libx11-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev zlib1g-dev libasound2-dev libgtk2.0-dev libjack-jackd2-dev
+    - name: fetch submodules
+      run: git submodule update --init --recursive
+    - name: make dependencies
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: make dep -j4
+    - name: compile
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: make -j4
