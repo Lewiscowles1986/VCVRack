@@ -19,6 +19,12 @@ jobs:
         cc: [gcc-8]
         cxx: [g++-8]
         include:
+        - os: macOS-latest
+          cc: clang
+          cxx: n/a
+        - os: windows-latest
+          cc: msvc
+          cxx: n/a
         - os: ubuntu-18.04
           cc: gcc-5
           cxx: g++-5
@@ -28,9 +34,6 @@ jobs:
         - os: ubuntu-18.04
           cc: gcc-7
           cxx: g++-7
-        - os: macOS-latest
-          cc: clang
-          cxx: n/a
       max-parallel: 4
 
     steps:
@@ -55,9 +58,26 @@ jobs:
         CXX: ${{ matrix.cxx }}
       run: make -j4
       if: runner.os == 'Linux'
-    - name: make dependencies (non-linux)
+    - name: make dependencies (mac)
       run: make dep -j4
-      if: runner.os != 'Linux'
-    - name: compile (non-linux)
+      if: runner.os == 'macOS'
+    - name: compile (mac)
       run: make -j4
-      if: runner.os != 'Linux'
+      if: runner.os == 'macOS'
+    - uses: numworks/setup-msys2@v1
+      with:
+        path-type: inherit
+        update: true
+      if: runner.os == 'Windows'
+    - name: Setup msys minggw (windows)
+      run: msys2do makepkg-mingw -sCLfc --noconfirm
+      if: runner.os == 'Windows'
+    - name: Install libraries (windows)
+      run: msys2do pacman --noconfirm -Su git wget make tar unzip zip mingw-w64-x86_64-gcc mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake autoconf automake mingw-w64-x86_64-libtool mingw-w64-x86_64-jq python
+      if: runner.os == 'Windows'
+    - name: make dependencies (windows)
+      run: msys2do make dep -j4
+      if: runner.os == 'Windows'
+    - name: compile (windows)
+      run: msys2do make -j4
+      if: runner.os == 'Windows'
