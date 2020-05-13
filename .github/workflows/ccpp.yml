@@ -67,6 +67,11 @@ jobs:
         VSTSDK_KEY: ${{ secrets.vst_sdk_enckey }}
       run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:$VSTSDK_KEY
       if: runner.os != 'Windows'
+    - name: decrypt CoreAudio SDK (linux, mac)
+      env:
+        CORE_AUDIO_SDK_KEY: ${{ secrets.core_audio_sdk_enckey }}
+      run: openssl aes-256-cbc -d -md sha512 -in vendor/CoreAudio.zip.enc -out vendor/CoreAudio.zip -pass pass:$CORE_AUDIO_SDK_KEY
+      if: runner.os == 'macOS'
     - name: make dependencies (linux)
       env:
         CC: ${{ matrix.cc }}
