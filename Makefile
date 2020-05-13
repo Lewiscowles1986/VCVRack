@@ -135,8 +135,8 @@ ifdef ARCH_WIN
 	@# Make ZIP
 	cd dist && zip -5 -r Rack-$(VERSION)-$(ARCH).zip Rack
 	@# Make NSIS installer
-	makensis installer.nsi
-	mv Rack-setup.exe dist/Rack-$(VERSION)-$(ARCH).exe
+	makensis installer.nsi || echo "installation creation failed"
+	mv Rack-setup.exe dist/Rack-$(VERSION)-$(ARCH).exe || echo "No installer"
 endif
 ifdef ARCH_LIN
 	mkdir -p dist/Rack
