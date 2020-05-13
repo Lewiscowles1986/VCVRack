@@ -70,7 +70,7 @@ jobs:
     - name: decrypt CoreAudio SDK (linux, mac)
       env:
         CORE_AUDIO_SDK_KEY: ${{ secrets.core_audio_sdk_enckey }}
-      run: openssl aes-256-cbc -d -md sha512 -in vendor/CoreAudio.zip.enc -out vendor/CoreAudio.zip -pass pass:$CORE_AUDIO_SDK_KEY
+      run: openssl aes-256-cbc -d -md sha512 -in vendor/CoreAudio2.zip.enc -out vendor/CoreAudio.zip -pass pass:$CORE_AUDIO_SDK_KEY
       if: runner.os == 'macOS'
     - name: make dependencies (linux, mac)
       env:
@@ -108,7 +108,7 @@ jobs:
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
-      run: cd Bridge/AU && unzip ../../vendor/CoreAudio.zip -d . && make dist && cd ../..
+      run: cd Bridge/AU && unzip ../../vendor/CoreAudio.zip -d . && mv CoreAudio2 CoreAudio && make dist && cd ../..
       if: runner.os == 'macOS'
     - name: build package (mac)
       env:
