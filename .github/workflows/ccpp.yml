@@ -11,57 +11,75 @@ on:
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-latest]
         cc: [gcc-8]
         cxx: [g++-8]
+        experimental: [false]
         include:
         - os: macOS-latest
           cc: clang
           cxx: n/a
+          experimental: true
         - os: windows-latest
           cc: msvc
           cxx: n/a
+          experimental: true
         - os: ubuntu-18.04
           cc: gcc-5
           cxx: g++-5
+          experimental: true
         - os: ubuntu-18.04
           cc: gcc-6
           cxx: g++-6
+          experimental: true
         - os: ubuntu-18.04
           cc: gcc-7
           cxx: g++-7
+          experimental: true
       max-parallel: 4
 
     steps:
     - uses: actions/checkout@v2
+    - name: fetch submodules
+      run: git submodule update --init --recursive
+    - name: clone fundamental plugins
+      run: cd plugins && git clone https://github.com/VCVRack/Fundamental.git && cd Fundamental && git checkout v0.6 && git submodule update --init --recursive && cd ../..
+    - name: clone bridge (0.6x only)
+      run: git clone https://github.com/VCVRack/Bridge.git && cd Bridge && git checkout v0.6 && git submodule update --init --recursive && cd ../
     - name: Install PPA's (linux)
       run:  sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
       if: runner.os == 'Linux'
     - name: Install libraries (linux)
-      run: sudo apt-get install -yqq ${{ matrix.cc }} ${{ matrix.cxx }} libstdc++6 build-essential git curl cmake libx11-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev zlib1g-dev libasound2-dev libgtk2.0-dev libjack-jackd2-dev
+      run: sudo apt-get install -yqq ${{ matrix.cc }} ${{ matrix.cxx }} libstdc++6 build-essential git gdb curl cmake libx11-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev zlib1g-dev libasound2-dev libgtk2.0-dev libjack-jackd2-dev jq
       if: runner.os == 'Linux'
-    - name: fetch submodules
-      run: git submodule update --init --recursive
     - name: make dependencies (linux)
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: make dep -j4
       if: runner.os == 'Linux'
-    - name: compile (linux)
+    - name: compile core (linux)
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: make -j4
       if: runner.os == 'Linux'
+    - name: compile fundamental plugins (linux)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
+      if: runner.os == 'Linux'
+    - name: build package (Linux)
+      run: make dist
+      if: runner.os == 'Linux'
     - uses: actions/upload-artifact@v2
       with:
-        name: build-folder-ubuntu-18.04
-        path: build
+        path: dist/Rack-*.zip
       if: runner.os == 'Linux' && matrix.cc == 'gcc-8' && matrix.os == 'ubuntu-18.04'
     - name: make dependencies (mac)
       run: make dep -j4
@@ -69,10 +87,15 @@ jobs:
     - name: compile (mac)
       run: make -j4
       if: runner.os == 'macOS'
+    - name: compile fundamental plugins (mac)
+      run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
+      if: runner.os == 'macOS'
+    - name: build package (mac)
+      run: make dist
+      if: runner.os == 'macOS'
     - uses: actions/upload-artifact@v2
       with:
-        name: build-folder-mac
-        path: build
+        path: dist/*.{dmg,zip}
       if: runner.os == 'macOS'
     - uses: numworks/setup-msys2@v1
       with:
@@ -91,8 +114,13 @@ jobs:
     - name: compile (windows)
       run: msys2do make -j4
       if: runner.os == 'Windows'
+    - name: compile fundamental plugins (windows)
+      run: cd plugins/Fundamental && msysdo make dep -j4 && msysdo make -j4 && cd ../..
+      if: runner.os == 'Windows'
+    - name: build package (windows)
+      run: msys2do make dist
+      if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
-        name: build-folder-win
-        path: build
+        path: dist/*.{exe,zip}
       if: runner.os == 'Windows'
