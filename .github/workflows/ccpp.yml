@@ -60,12 +60,13 @@ jobs:
       run: choco install openssl
       if: runner.os == 'Windows'
     - name: install openSSL (mac)
-      run: brew install openssl
+      run: brew update && brew install openssl@1.1
       if: runner.os == 'macOS'
-    - name: decrypt VTSDK
+    - name: decrypt VTSDK (linux, mac)
       env:
-        VTSDK_KEY: ${{ secrets.vtsdkencryptionkey }}
-      run: openssl aes-256-cbc -d -a -in vendor/vtsdk.zip.enc -out vendor/vtsdk.zip -k $VTSDK_KEY
+        VSTSDK_KEY: ${{ secrets.vst_sdk_enckey }}
+      run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:$VSTSDK_KEY
+      if: runner.os != 'Windows'
     - name: make dependencies (linux)
       env:
         CC: ${{ matrix.cc }}
@@ -84,6 +85,12 @@ jobs:
         CXX: ${{ matrix.cxx }}
       run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
       if: runner.os == 'Linux'
+    - name: build bridge (linux)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && cd ../..
+      if: runner.os == 'Linux' 
     - name: build package (Linux)
       run: make dist
       if: runner.os == 'Linux'
@@ -125,6 +132,9 @@ jobs:
     - name: Install libraries (windows)
       run: msys2do pacman --noconfirm -Su git wget make tar unzip zip mingw-w64-x86_64-gcc mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake autoconf automake mingw-w64-x86_64-libtool mingw-w64-x86_64-jq python
       if: runner.os == 'Windows'
+    - name: decrypt VTSDK (windows)
+      run: msys2do openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}
+      if: runner.os == 'Windows'
     - name: make dependencies (windows)
       run: msys2do make dep -j4
       if: runner.os == 'Windows'
@@ -133,6 +143,9 @@ jobs:
       if: runner.os == 'Windows'
     - name: compile all plugins (windows)
       run: cd plugins/Fundamental && msys2do make dep -j4 && msys2do make -j4 && cd ../..
+      if: runner.os == 'Windows'
+    - name: build bridge (windows)
+      run: cd Bridge/VST && msys2do unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && msys2do make dist && cd ../..
       if: runner.os == 'Windows' 
     - name: build package (windows)
       run: msys2do make dist
