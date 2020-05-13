@@ -22,7 +22,7 @@ jobs:
         include:
         - os: macOS-latest
           cc: clang
-          cxx: n/a
+          cxx: clang++
           experimental: true
         - os: windows-latest
           cc: msvc
@@ -49,7 +49,7 @@ jobs:
     - name: clone fundamental plugins
       run: cd plugins && git clone https://github.com/VCVRack/Fundamental.git && cd Fundamental && git checkout v0.6 && git submodule update --init --recursive && cd ../..
     - name: clone bridge (0.6x only)
-      run: git clone https://github.com/VCVRack/Bridge.git && cd Bridge && git checkout v0.6 && git submodule update --init --recursive && cd ../
+      run: git clone https://github.com/Lewiscowles1986/Bridge.git && cd Bridge && git checkout v0.6 && git submodule update --init --recursive && cd ../
     - name: Install PPA's (linux)
       run:  sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
       if: runner.os == 'Linux'
@@ -60,7 +60,7 @@ jobs:
       run: choco install openssl
       if: runner.os == 'Windows'
     - name: install openSSL (mac)
-      run: brew update && brew install openssl@1.1
+      run: brew update && brew install openssl@1.1 && brew install llvm
       if: runner.os == 'macOS'
     - name: decrypt VTSDK (linux, mac)
       env:
@@ -72,24 +72,24 @@ jobs:
         CORE_AUDIO_SDK_KEY: ${{ secrets.core_audio_sdk_enckey }}
       run: openssl aes-256-cbc -d -md sha512 -in vendor/CoreAudio.zip.enc -out vendor/CoreAudio.zip -pass pass:$CORE_AUDIO_SDK_KEY
       if: runner.os == 'macOS'
-    - name: make dependencies (linux)
+    - name: make dependencies (linux, mac)
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: make dep -j4
-      if: runner.os == 'Linux'
-    - name: compile core (linux)
+      if: runner.os != 'Windows'
+    - name: compile core (linux, mac)
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: make -j4
-      if: runner.os == 'Linux'
-    - name: compile fundamental plugins (linux)
+      if: runner.os != 'Windows'
+    - name: compile fundamental plugins (linux, mac)
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
-      if: runner.os == 'Linux'
+      if: runner.os != 'Windows'
     - name: build bridge (linux)
       env:
         CC: ${{ matrix.cc }}
@@ -104,16 +104,16 @@ jobs:
         name: Linux
         path: dist/Rack-*.zip
       if: runner.os == 'Linux' && matrix.cc == 'gcc-8' && matrix.os == 'ubuntu-18.04'
-    - name: make dependencies (mac)
-      run: make dep -j4
-      if: runner.os == 'macOS'
-    - name: compile (mac)
-      run: make -j4
-      if: runner.os == 'macOS'
-    - name: compile fundamental plugins (mac)
-      run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
+    - name: compile AU Apple Bridge (mac)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: cd Bridge/AU && unzip ../../vendor/CoreAudio.zip -d . && make dist && cd ../..
       if: runner.os == 'macOS'
     - name: build package (mac)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
       run: make dist
       if: runner.os == 'macOS'
     - uses: actions/upload-artifact@v2
