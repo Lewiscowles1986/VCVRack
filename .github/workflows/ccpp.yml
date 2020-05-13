@@ -18,7 +18,7 @@ jobs:
         os: [ubuntu-18.04, ubuntu-latest]
         cc: [gcc-8]
         cxx: [g++-8]
-        experimental: [false]
+        experimental: [true]
         include:
         - os: macOS-latest
           cc: clang
