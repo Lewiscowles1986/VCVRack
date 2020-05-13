@@ -95,7 +95,11 @@ jobs:
       if: runner.os == 'macOS'
     - uses: actions/upload-artifact@v2
       with:
-        path: dist/*.{dmg,zip}
+        path: dist/*.dmg
+      if: runner.os == 'macOS'
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/*.zip
       if: runner.os == 'macOS'
     - uses: numworks/setup-msys2@v1
       with:
@@ -114,13 +118,17 @@ jobs:
     - name: compile (windows)
       run: msys2do make -j4
       if: runner.os == 'Windows'
-    - name: compile fundamental plugins (windows)
-      run: cd plugins/Fundamental && msysdo make dep -j4 && msysdo make -j4 && cd ../..
+    - name: compile all plugins (windows)
+      run: cd plugins/Fundamental && msys2do make dep -j4 && msys2do make -j4 && cd ../..
       if: runner.os == 'Windows'
     - name: build package (windows)
       run: msys2do make dist
       if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
-        path: dist/*.{exe,zip}
+        path: dist/*.exe
+      if: runner.os == 'Windows'
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/*.zip
       if: runner.os == 'Windows'
