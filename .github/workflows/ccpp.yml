@@ -67,7 +67,7 @@ jobs:
         VSTSDK_KEY: ${{ secrets.vst_sdk_enckey }}
       run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:$VSTSDK_KEY
       if: runner.os != 'Windows'
-    - name: decrypt CoreAudio SDK (linux, mac)
+    - name: decrypt CoreAudio SDK (mac)
       env:
         CORE_AUDIO_SDK_KEY: ${{ secrets.core_audio_sdk_enckey }}
       run: openssl aes-256-cbc -d -md sha512 -in vendor/CoreAudio2.zip.enc -out vendor/CoreAudio.zip -pass pass:$CORE_AUDIO_SDK_KEY
@@ -95,7 +95,7 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
       run: cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && cd ../..
-      if: runner.os == 'Linux' 
+      if: runner.os != 'Windows' 
     - name: build package (Linux)
       run: make dist
       if: runner.os == 'Linux'
