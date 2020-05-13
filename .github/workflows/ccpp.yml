@@ -79,6 +79,7 @@ jobs:
       if: runner.os == 'Linux'
     - uses: actions/upload-artifact@v2
       with:
+        name: Linux
         path: dist/Rack-*.zip
       if: runner.os == 'Linux' && matrix.cc == 'gcc-8' && matrix.os == 'ubuntu-18.04'
     - name: make dependencies (mac)
@@ -95,10 +96,12 @@ jobs:
       if: runner.os == 'macOS'
     - uses: actions/upload-artifact@v2
       with:
+        name: OSx
         path: dist/*.dmg
       if: runner.os == 'macOS'
     - uses: actions/upload-artifact@v2
       with:
+        name: OSx
         path: dist/*.zip
       if: runner.os == 'macOS'
     - uses: numworks/setup-msys2@v1
@@ -126,9 +129,11 @@ jobs:
       if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
+        name: Windows
         path: dist/*.exe
       if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
+        name: Windows
         path: dist/*.zip
       if: runner.os == 'Windows'
