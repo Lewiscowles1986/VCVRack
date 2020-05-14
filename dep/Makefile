@@ -160,7 +160,7 @@ $(osdialog): $(wildcard osdialog/*.h)
 	cp $^ include/
 
 $(pffft):
-	$(WGET) "https://bitbucket.org/jpommier/pffft/get/29e4f76ac53b.zip"
+	$(WGET) "https://bitbucket.org/jpommier/pffft/get/29e4f76ac53b.zip" || $(WGET) "http://download.gaborator.com/mirror/pffft/29e4f76ac53b.zip"
 	$(UNZIP) 29e4f76ac53b.zip
 	cp jpommier-pffft-29e4f76ac53b/*.h include/
 

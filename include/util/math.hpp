@@ -7,9 +7,9 @@
 
 // Use a few standard math functions without std::
 using std::isfinite;
-using std::isinf;
-using std::isnan;
-using std::isnormal;
+//using std::isinf;
+//using std::isnan;
+//using std::isnormal;
 
 
 namespace rack {
@@ -211,7 +211,7 @@ struct Vec {
 		return x == 0.0f && y == 0.0f;
 	}
 	bool isFinite() {
-		return isfinite(x) && isfinite(y);
+		return std::isfinite(x) && std::isfinite(y);
 	}
 	Vec clamp(Rect bound);
 	Vec clamp2(Rect bound);
