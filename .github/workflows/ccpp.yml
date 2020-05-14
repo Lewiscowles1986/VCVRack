@@ -94,7 +94,7 @@ jobs:
       env:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
-      run: cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && make FX dist && cd ../..
+      run: cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && FX=1 make dist && cd ../..
       if: runner.os != 'Windows' 
     - name: build package (Linux)
       run: make dist
@@ -149,8 +149,8 @@ jobs:
     - name: compile all plugins (windows)
       run: cd plugins/Fundamental && msys2do make dep -j4 && msys2do make -j4 && cd ../..
       if: runner.os == 'Windows'
-    - name: build bridge (windows)
-      run: cd Bridge/VST && msys2do unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && msys2do make dist && make FX dist && cd ../..
+    - name: build VST bridge (windows)
+      run: cd Bridge/VST && msys2do unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && msys2do make dist && msys2do FX=1 make dist && cd ../..
       if: runner.os == 'Windows' 
     - name: build package (windows)
       run: msys2do make dist
