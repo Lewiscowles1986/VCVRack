@@ -102,6 +102,9 @@ dist: $(TARGET)
 	rm -rf dist
 	mkdir -p dist
 
+	@# Rack
+	$(MAKE) -C plugins/Fundamental dist
+
 ifdef ARCH_LIN
 	mkdir -p dist/Rack
 	cp $(TARGET) dist/Rack/
@@ -109,7 +112,7 @@ ifdef ARCH_LIN
 	cp -R $(DIST_RES) dist/Rack/
 	# Manually check that no nonstandard shared libraries are linked
 	ldd dist/Rack/$(TARGET)
-	cp Fundamental.zip dist/Rack/
+	cp plugins/Fundamental/dist/*.zip dist/Rack/
 	# Make ZIP
 	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack
 endif
@@ -127,14 +130,17 @@ ifdef ARCH_MAC
 	# Manually check that no nonstandard shared libraries are linked
 	otool -L dist/Rack.app/Contents/MacOS/$(TARGET)
 
-	cp Fundamental.zip dist/Rack.app/Contents/Resources/Fundamental.txt
-	# Clean up and sign bundle
+	cp plugins/Fundamental/dist/*.zip dist/Rack.app/Contents/Resources/
+	# Clean up bundle
 	xattr -cr dist/Rack.app
-	# This will only work if you have the private key to my certificate
-	codesign --verbose --sign "Developer ID Application: Andrew Belt (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep dist/Rack.app
-	codesign --verify --deep --strict --verbose=2 dist/Rack.app
 	# Make ZIP
 	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack.app
+
+	@# Make DMG image
+	cd dist && ln -s /Applications Applications
+	cd dist && ln -s /Library/Audio/Plug-Ins/Components Components
+	cd dist && ln -s /Library/Audio/Plug-Ins/VST VST
+	cd dist && hdiutil create -srcfolder . -volname Rack -ov -format UDZO Rack-$(VERSION)-$(ARCH).dmg
 endif
 ifdef ARCH_WIN
 	mkdir -p dist/Rack
@@ -144,7 +150,7 @@ ifdef ARCH_WIN
 	cp /mingw64/bin/libwinpthread-1.dll dist/Rack/
 	cp /mingw64/bin/libstdc++-6.dll dist/Rack/
 	cp /mingw64/bin/libgcc_s_seh-1.dll dist/Rack/
-	cp Fundamental.zip dist/Rack/
+	cp plugins/Fundamental/dist/*.zip dist/Rack/
 	# Make ZIP
 	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack
 	# Make NSIS installer

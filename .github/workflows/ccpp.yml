@@ -1,0 +1,137 @@
+name: C/C++ CI
+
+on:
+  release:
+  push:
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: 0 6 * * *
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-latest]
+        cc: [gcc-8]
+        cxx: [g++-8]
+        experimental: [true]
+        include:
+        - os: macOS-latest
+          cc: clang
+          cxx: clang++
+          experimental: true
+        - os: windows-latest
+          cc: msvc
+          cxx: n/a
+          experimental: true
+        - os: ubuntu-18.04
+          cc: gcc-5
+          cxx: g++-5
+          experimental: true
+        - os: ubuntu-18.04
+          cc: gcc-6
+          cxx: g++-6
+          experimental: true
+        - os: ubuntu-18.04
+          cc: gcc-7
+          cxx: g++-7
+          experimental: true
+      max-parallel: 4
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: fetch submodules
+      run: git submodule update --init --recursive
+    - name: clone fundamental plugins
+      run: cd plugins && git clone https://github.com/VCVRack/Fundamental.git && cd Fundamental && git checkout v1.3.1 && git submodule update --init --recursive && cd ../..
+    - name: Install PPA's (linux)
+      run:  sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+      if: runner.os == 'Linux'
+    - name: Install libraries (linux)
+      run: sudo apt-get install -yqq ${{ matrix.cc }} ${{ matrix.cxx }} libstdc++6 build-essential git gdb curl cmake libx11-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev zlib1g-dev libasound2-dev libgtk2.0-dev libjack-jackd2-dev jq openssl
+      if: runner.os == 'Linux'
+    - name: install openSSL (windows)
+      run: choco install openssl
+      if: runner.os == 'Windows'
+    - name: install openSSL (mac)
+      run: brew update && brew install openssl@1.1 && brew install llvm
+      if: runner.os == 'macOS'
+    - name: make dependencies (linux, mac)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: make dep -j4
+      if: runner.os != 'Windows'
+    - name: compile core (linux, mac)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: make -j4
+      if: runner.os != 'Windows'
+    - name: compile fundamental plugins (linux, mac)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
+      if: runner.os != 'Windows'
+    - name: build package (Linux)
+      run: make dist
+      if: runner.os == 'Linux'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Linux
+        path: dist/Rack-*.zip
+      if: runner.os == 'Linux' && matrix.cc == 'gcc-8' && matrix.os == 'ubuntu-18.04'
+    - name: build package (mac)
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: make dist
+      if: runner.os == 'macOS'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: OSx
+        path: dist/*.dmg
+      if: runner.os == 'macOS'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: OSx
+        path: dist/*.zip
+      if: runner.os == 'macOS'
+    - uses: numworks/setup-msys2@v1
+      with:
+        path-type: inherit
+        update: true
+      if: runner.os == 'Windows'
+    - name: Setup msys minggw (windows)
+      run: msys2do makepkg-mingw -sCLfc --noconfirm
+      if: runner.os == 'Windows'
+    - name: Install libraries (windows)
+      run: msys2do pacman --noconfirm -Su git wget make tar unzip zip mingw-w64-x86_64-gcc mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake autoconf automake mingw-w64-x86_64-libtool mingw-w64-x86_64-jq python
+      if: runner.os == 'Windows'
+    - name: make dependencies (windows)
+      run: msys2do make dep -j4
+      if: runner.os == 'Windows'
+    - name: compile (windows)
+      run: msys2do make -j4
+      if: runner.os == 'Windows'
+    - name: compile all plugins (windows)
+      run: cd plugins/Fundamental && msys2do make dep -j4 && msys2do make -j4 && cd ../..
+      if: runner.os == 'Windows'
+    - name: build package (windows)
+      run: msys2do make dist
+      if: runner.os == 'Windows'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Windows
+        path: dist/*.exe
+      if: runner.os == 'Windows'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Windows
+        path: dist/*.zip
+      if: runner.os == 'Windows'
