@@ -139,9 +139,8 @@ ifdef ARCH_WIN
 	mv Rack-setup.exe dist/Rack-$(VERSION)-$(ARCH).exe || echo "No installer"
 endif
 ifdef ARCH_LIN
-	mkdir -p dist/Rack
 	mkdir -p dist/Rack/Bridge
-	cp Bridge/VST/dist/VCV-Bridge{,-fx}.so dist/Rack/Bridge/ || echo "Cannot copy Bridge"
+	cp Bridge/VST/dist/VCV-Bridge*.so dist/Rack/Bridge/ || echo "Cannot copy Bridge"
 	cp -R LICENSE* res dist/Rack/
 	cp $(TARGET) dist/Rack/
 	$(STRIP) -s dist/Rack/$(TARGET)
