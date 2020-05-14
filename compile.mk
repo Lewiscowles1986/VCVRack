@@ -20,7 +20,6 @@ FLAGS += -Wall -Wextra -Wno-unused-parameter
 
 ifneq ($(ARCH), mac)
 	CXXFLAGS += -Wsuggest-override
-	CXXFLAGS += -Wc++11-narrowing
 endif
 
 CXXFLAGS += -std=c++11
