@@ -1,13 +1,15 @@
 RACK_DIR ?= .
-VERSION := 1.dev.$(shell git rev-parse --short HEAD)
-# VERSION := 1.1.6
+VERSION = 0.6.2c
 
-FLAGS += -DVERSION=$(VERSION)
-FLAGS += -Iinclude -Idep/include
+FLAGS += \
+	-Iinclude \
+	-Idep/include -Idep/lib/libzip/include
 
 include arch.mk
 
-SED := perl -pi -e
+STRIP ?= strip
+SED := perl -p -i -e
+# SED := sed -i
 
 # Sources and build flags
 
@@ -16,36 +18,37 @@ SOURCES += dep/osdialog/osdialog.c
 SOURCES += $(wildcard dep/jpommier-pffft-*/pffft.c) $(wildcard dep/jpommier-pffft-*/fftpack.c)
 SOURCES += $(wildcard src/*.cpp src/*/*.cpp)
 
-ifdef ARCH_LIN
-	SOURCES += dep/osdialog/osdialog_gtk2.c
-build/dep/osdialog/osdialog_gtk2.c.o: FLAGS += $(shell pkg-config --cflags gtk+-2.0)
-
-	LDFLAGS += -rdynamic \
-		dep/lib/libGLEW.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/libzip.a dep/lib/libz.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a dep/lib/librtmidi.a dep/lib/librtaudio.a \
-		-lpthread -lGL -ldl -lX11 -lasound -ljack \
-		$(shell pkg-config --libs gtk+-2.0)
-	TARGET := Rack
-endif
-
 ifdef ARCH_MAC
 	SOURCES += dep/osdialog/osdialog_mac.m
-	LDFLAGS += -lpthread -ldl \
+	CXXFLAGS += -stdlib=libc++
+	LDFLAGS += -stdlib=libc++ -lpthread -ldl \
 		-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo -framework CoreAudio -framework CoreMIDI \
-		-Wl,-all_load \
-		dep/lib/libGLEW.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/libzip.a dep/lib/libz.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a dep/lib/librtmidi.a dep/lib/librtaudio.a
-	# For LuaJIT
-	LDFLAGS += -Wl,-pagezero_size,10000 -Wl,-image_base,100000000
+		-Ldep/lib dep/lib/libglfw3.a dep/lib/libGLEW.a dep/lib/libjansson.a dep/lib/libspeexdsp.a dep/lib/libzip.a dep/lib/libz.a dep/lib/librtaudio.a dep/lib/librtmidi.a dep/lib/libcrypto.a dep/lib/libssl.a dep/lib/libcurl.a
 	TARGET := Rack
+	BUNDLE := dist/$(TARGET).app
 endif
 
 ifdef ARCH_WIN
 	SOURCES += dep/osdialog/osdialog_win.c
-	LDFLAGS += -Wl,--export-all-symbols,--out-implib,libRack.a -mwindows \
-		dep/lib/libglew32.a dep/lib/libglfw3.a dep/lib/libjansson.a dep/lib/libspeexdsp.a dep/lib/libsamplerate.a dep/lib/libzip.a dep/lib/libz.a dep/lib/libcurl.a dep/lib/libssl.a dep/lib/libcrypto.a dep/lib/librtaudio.a dep/lib/librtmidi.a \
-		-lpthread -lopengl32 -lgdi32 -lws2_32 -lcomdlg32 -lole32 -ldsound -lwinmm -lksuser -lshlwapi -lmfplat -lmfuuid -lwmcodecdspuuid -ldbghelp
+	LDFLAGS += -static \
+		-Wl,--export-all-symbols,--out-implib,libRack.a -mwindows \
+		-Ldep/lib -lglew32 -lglfw3 -ljansson -lspeexdsp -lzip -lz -lcurl -lssl -lcrypto -lrtaudio -lrtmidi \
+		-lpthread -lopengl32 -lgdi32 -lws2_32 -lcomdlg32 -lole32 -ldsound -lwinmm -lksuser -lshlwapi
 	TARGET := Rack.exe
 	OBJECTS += Rack.res
 endif
+
+ifdef ARCH_LIN
+	SOURCES += dep/osdialog/osdialog_gtk2.c
+	CFLAGS += $(shell pkg-config --cflags gtk+-2.0)
+	LDFLAGS += -rdynamic \
+		-Ldep/lib \
+		-Wl,-Bstatic -lglfw3 -lGLEW -ljansson -lspeexdsp -lzip -lz -lrtmidi -lrtaudio -lcurl -lssl -lcrypto \
+		-Wl,-Bdynamic -lpthread -lGL -ldl -lX11 -lasound -ljack \
+		$(shell pkg-config --libs gtk+-2.0)
+	TARGET := Rack
+endif
+
 
 # Convenience targets
 
@@ -62,7 +65,7 @@ runr: $(TARGET)
 
 debug: $(TARGET)
 ifdef ARCH_MAC
-	lldb -- ./$< -d
+	lldb --args ./$< -d
 endif
 ifdef ARCH_WIN
 	gdb --args ./$< -d
@@ -72,146 +75,126 @@ ifdef ARCH_LIN
 endif
 
 perf: $(TARGET)
-	# Requires gperftools
+ifdef ARCH_LIN
 	perf record --call-graph dwarf -o perf.data ./$< -d
-	# Analyze with hotspot (https://github.com/KDAB/hotspot) for example
-	hotspot perf.data
-	rm perf.data
-
-valgrind: $(TARGET)
-	# --gen-suppressions=yes
-	# --leak-check=full
-	valgrind --suppressions=valgrind.supp ./$< -d
+endif
 
 clean:
 	rm -rfv $(TARGET) libRack.a Rack.res build dist
 
-
+ifdef ARCH_WIN
 # For Windows resources
 %.res: %.rc
-ifdef ARCH_WIN
 	windres $^ -O coff -o $@
 endif
 
 
-DIST_RES := LICENSE* CHANGELOG.md res cacert.pem Core.json template.vcv
-DIST_NAME := Rack-$(VERSION)-$(ARCH)
-DIST_SDK := Rack-SDK-$(VERSION).zip
-
 # This target is not intended for public use
-dist: $(TARGET)
+dist: all
 	rm -rf dist
 	mkdir -p dist
 
-ifdef ARCH_LIN
-	mkdir -p dist/Rack
-	cp $(TARGET) dist/Rack/
-	$(STRIP) -s dist/Rack/$(TARGET)
-	cp -R $(DIST_RES) dist/Rack/
-	# Manually check that no nonstandard shared libraries are linked
-	ldd dist/Rack/$(TARGET)
-	cp Fundamental.zip dist/Rack/
-	# Make ZIP
-	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack
-endif
+	@# Rack
+	$(MAKE) -C plugins/Fundamental dist
+
 ifdef ARCH_MAC
-	mkdir -p dist/Rack.app
-	mkdir -p dist/Rack.app/Contents
-	cp Info.plist dist/Rack.app/Contents/
-	$(SED) 's/{VERSION}/$(VERSION)/g' dist/Rack.app/Contents/Info.plist
-	mkdir -p dist/Rack.app/Contents/MacOS
-	cp $(TARGET) dist/Rack.app/Contents/MacOS/
-	$(STRIP) -S dist/Rack.app/Contents/MacOS/$(TARGET)
-	mkdir -p dist/Rack.app/Contents/Resources
-	cp -R $(DIST_RES) icon.icns dist/Rack.app/Contents/Resources/
+	mkdir -p $(BUNDLE)
+	mkdir -p $(BUNDLE)/Contents
+	mkdir -p $(BUNDLE)/Contents/Resources
+	cp Info.plist $(BUNDLE)/Contents/
+	$(SED) 's/{VERSION}/$(VERSION)/g' $(BUNDLE)/Contents/Info.plist
+	cp -R LICENSE* icon.icns res $(BUNDLE)/Contents/Resources
 
-	# Manually check that no nonstandard shared libraries are linked
-	otool -L dist/Rack.app/Contents/MacOS/$(TARGET)
+	mkdir -p $(BUNDLE)/Contents/MacOS
+	cp $(TARGET) $(BUNDLE)/Contents/MacOS/
+	$(STRIP) -S $(BUNDLE)/Contents/MacOS/$(TARGET)
 
-	cp Fundamental.zip dist/Rack.app/Contents/Resources/Fundamental.txt
-	# Clean up and sign bundle
-	xattr -cr dist/Rack.app
-	# This will only work if you have the private key to my certificate
-	codesign --verbose --sign "Developer ID Application: Andrew Belt (VRF26934X5)" --options runtime --entitlements Entitlements.plist --deep dist/Rack.app
-	codesign --verify --deep --strict --verbose=2 dist/Rack.app
-	# Make ZIP
-	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack.app
+	otool -L $(BUNDLE)/Contents/MacOS/$(TARGET)
+
+	cp plugins/Fundamental/dist/Fundamental-*.zip $(BUNDLE)/Contents/Resources/Fundamental.zip
+	cp -R Bridge/AU/dist/VCV-Bridge.component dist/ || echo "Cannot copy Bridge"
+	cp -R Bridge/VST/dist/VCV-Bridge.vst dist/ || echo "Cannot copy Bridge"
+	cp -R Bridge/VST/dist/VCV-Bridge-fx.vst dist/ || echo "Cannot copy Bridge"
+	@# Make DMG image
+	cd dist && ln -s /Applications Applications
+	cd dist && ln -s /Library/Audio/Plug-Ins/Components Components
+	cd dist && ln -s /Library/Audio/Plug-Ins/VST VST
+	cd dist && hdiutil create -srcfolder . -volname Rack -ov -format UDZO Rack-$(VERSION)-$(ARCH).dmg
 endif
 ifdef ARCH_WIN
 	mkdir -p dist/Rack
+	mkdir -p dist/Rack/Bridge
+	cp Bridge/VST/dist/VCV-Bridge-{32,64,fx-32,fx-64}.dll dist/Rack/Bridge/ || echo "Cannot copy Bridge"
+	cp -R LICENSE* res dist/Rack/
 	cp $(TARGET) dist/Rack/
 	$(STRIP) -s dist/Rack/$(TARGET)
-	cp -R $(DIST_RES) dist/Rack/
 	cp /mingw64/bin/libwinpthread-1.dll dist/Rack/
 	cp /mingw64/bin/libstdc++-6.dll dist/Rack/
 	cp /mingw64/bin/libgcc_s_seh-1.dll dist/Rack/
-	cp Fundamental.zip dist/Rack/
-	# Make ZIP
-	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack
-	# Make NSIS installer
-	# pacman -S mingw-w64-x86_64-nsis
-	makensis -DVERSION=$(VERSION) installer.nsi
-	mv installer.exe dist/$(DIST_NAME).exe
+	cp plugins/Fundamental/dist/Fundamental-*.zip dist/Rack/Fundamental.zip
+	@# Make ZIP
+	cd dist && zip -5 -r Rack-$(VERSION)-$(ARCH).zip Rack
+	@# Make NSIS installer
+	makensis installer.nsi || makensis installer64.nsi && echo "no 32-bit, falling back to 64-bit" || echo "installation creation failed"
+	mv Rack-setup.exe dist/Rack-$(VERSION)-$(ARCH).exe || echo "No installer"
+endif
+ifdef ARCH_LIN
+	mkdir -p dist/Rack/Bridge
+	cp Bridge/VST/dist/VCV-Bridge*.so dist/Rack/Bridge/ || echo "Cannot copy Bridge"
+	cp -R LICENSE* res dist/Rack/
+	cp $(TARGET) dist/Rack/
+	$(STRIP) -s dist/Rack/$(TARGET)
+	ldd dist/Rack/$(TARGET)
+	cp plugins/Fundamental/dist/Fundamental-*.zip dist/Rack/Fundamental.zip
+	@# Make ZIP
+	cd dist && zip -5 -r Rack-$(VERSION)-$(ARCH).zip Rack
 endif
 
-	# Rack SDK
+	@# Rack SDK
 	mkdir -p dist/Rack-SDK
-	cp -R LICENSE* *.mk include helper.py dist/Rack-SDK/
+	cp LICENSE* dist/Rack-SDK/
+	cp *.mk dist/Rack-SDK/
+	cp -R include dist/Rack-SDK/
 	mkdir -p dist/Rack-SDK/dep/
 	cp -R dep/include dist/Rack-SDK/dep/
 ifdef ARCH_WIN
 	cp libRack.a dist/Rack-SDK/
 endif
-	cd dist && zip -q -9 -r $(DIST_SDK) Rack-SDK
+	cd dist && zip -5 -r Rack-SDK-$(VERSION)-$(ARCH).zip Rack-SDK
 
 
-notarize:
-ifdef ARCH_MAC
-	# This will only work if you have my Apple ID password in your keychain
-	xcrun altool --notarize-app -f dist/Rack-$(VERSION)-$(ARCH).zip --primary-bundle-id=com.vcvrack.rack -u "andrewpbelt@gmail.com" -p @keychain:notarize --output-format xml > dist/UploadInfo.plist
-	# Wait for Apple's servers to approve the app
-	while true; do \
-		echo "Waiting on Apple servers..." ; \
-		xcrun altool --notarization-info `/usr/libexec/PlistBuddy -c "Print :notarization-upload:RequestUUID" dist/UploadInfo.plist` -u "andrewpbelt@gmail.com" -p @keychain:notarize --output-format xml > dist/RequestInfo.plist ; \
-		if [ "`/usr/libexec/PlistBuddy -c "Print :notarization-info:Status" dist/RequestInfo.plist`" != "in progress" ]; then \
-			break ; \
-		fi ; \
-		sleep 10 ; \
-	done
-	# Mark app as notarized, check, and re-zip
-	xcrun stapler staple dist/Rack.app
-	spctl --assess --type execute --ignore-cache --no-cache -vv dist/Rack.app
-	cd dist && zip -q -9 -r $(DIST_NAME).zip Rack.app
-endif
-
-
+# Obviously this will only work if you have the private keys to my server
 UPLOAD_URL := vortico@vcvrack.com:files/
 upload:
-	# This will only work if you have a private key to my server
 ifdef ARCH_MAC
-	rsync dist/$(DIST_NAME).zip $(UPLOAD_URL) -zP
+	rsync dist/*.{dmg,zip} $(UPLOAD_URL) -zP
 endif
 ifdef ARCH_WIN
-	rsync dist/$(DIST_NAME).zip dist/$(DIST_NAME).exe dist/$(DIST_SDK) $(UPLOAD_URL) -P
+	rsync dist/*.{exe,zip} $(UPLOAD_URL) -P
 endif
 ifdef ARCH_LIN
-	rsync dist/$(DIST_NAME).zip $(UPLOAD_URL) -zP
+	rsync dist/*.zip $(UPLOAD_URL) -zP
 endif
 
 
 # Plugin helpers
 
-plugins:
-ifdef CMD
-	for f in plugins/*; do (cd "$$f" && $(CMD)); done
-else
+allplugins:
 	for f in plugins/*; do $(MAKE) -C "$$f"; done
-endif
+
+cleanplugins:
+	for f in plugins/*; do $(MAKE) -C "$$f" clean; done
+
+distplugins:
+	for f in plugins/*; do $(MAKE) -C "$$f" dist; done
+
+plugins:
+	for f in plugins/*; do (cd "$$f" && ${CMD}); done
 
 
 # Includes
 
 include compile.mk
 
+.PHONY: all dep run debug clean dist allplugins cleanplugins distplugins plugins
 .DEFAULT_GOAL := all
-.PHONY: all dep run debug clean dist upload src plugins
