@@ -123,13 +123,17 @@ ifdef ARCH_MAC
 	otool -L dist/$(TARGET).app/Contents/MacOS/$(TARGET)
 
 	cp plugins/Fundamental/dist/*.zip dist/$(TARGET).app/Contents/Resources/Fundamental.zip
-	# Clean up and sign bundle
+	# Clean up bundle
 	xattr -cr dist/$(TARGET).app
-	codesign --sign "Developer ID Application: Andrew Belt (VRF26934X5)" --verbose dist/$(TARGET).app
-	codesign --verify --verbose dist/$(TARGET).app
-	spctl --assess --verbose dist/$(TARGET).app
+
 	# Make ZIP
 	cd dist && zip -q -9 -r Rack-$(VERSION)-$(ARCH).zip $(TARGET).app
+
+	# Make DMG image
+	cd dist && ln -s /Applications Applications
+	cd dist && ln -s /Library/Audio/Plug-Ins/Components Components
+	cd dist && ln -s /Library/Audio/Plug-Ins/VST VST
+	cd dist && hdiutil create -srcfolder . -volname Rack -ov -format UDZO Rack-$(VERSION)-$(ARCH).dmg
 endif
 ifdef ARCH_WIN
 	mkdir -p dist/Rack
