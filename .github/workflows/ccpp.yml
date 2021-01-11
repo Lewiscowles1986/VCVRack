@@ -126,7 +126,7 @@ jobs:
         name: OSx
         path: dist/*.zip
       if: runner.os == 'macOS'
-    - uses: numworks/setup-msys2@v1
+    - uses: msys2/setup-msys2@v2
       with:
         path-type: inherit
         update: true
@@ -134,28 +134,28 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       if: runner.os == 'Windows'
     - name: Setup msys minggw (windows)
-      run: msys2do makepkg-mingw -sCLfc --noconfirm
+      run: makepkg-mingw -sCLfc --noconfirm
       if: runner.os == 'Windows'
     - name: Install libraries (windows)
-      run: msys2do pacman --noconfirm -Su git wget make tar unzip zip mingw-w64-i686-toolchain mingw-w64-i686-gcc mingw-w64-i686-gdb mingw-w64-i686-cmake mingw-w64-x86_64-toolchain mingw-w64-x86_64-gcc mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake autoconf automake mingw-w64-i686-libtool mingw-w64-i686-jq mingw-w64-x86_64-libtool mingw-w64-x86_64-jq python
+      run: pacman --noconfirm -Su git wget make tar unzip zip mingw-w64-i686-toolchain mingw-w64-i686-gcc mingw-w64-i686-gdb mingw-w64-i686-cmake mingw-w64-x86_64-toolchain mingw-w64-x86_64-gcc mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake autoconf automake mingw-w64-i686-libtool mingw-w64-i686-jq mingw-w64-x86_64-libtool mingw-w64-x86_64-jq python
       if: runner.os == 'Windows'
     - name: decrypt VTSDK (windows)
-      run: msys2do openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}
+      run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}
       if: runner.os == 'Windows'
     - name: make dependencies (windows)
-      run: msys2do make dep -j4
+      run: make dep -j4
       if: runner.os == 'Windows'
     - name: compile (windows)
-      run: msys2do make -j4
+      run: make -j4
       if: runner.os == 'Windows'
     - name: compile all plugins (windows)
-      run: cd plugins/Fundamental && msys2do make dep -j4 && msys2do make -j4 && cd ../..
+      run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
       if: runner.os == 'Windows'
     - name: build VST bridge (windows)
-      run: cd Bridge/VST && msys2do unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && msys2do make dist && msys2do FX=1 make dist && cd ../..
+      run: cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && FX=1 make dist && cd ../..
       if: runner.os == 'Windows' 
     - name: build package (windows)
-      run: msys2do make dist
+      run: make dist
       if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
