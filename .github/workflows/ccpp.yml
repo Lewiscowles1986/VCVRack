@@ -134,6 +134,7 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       if: runner.os == 'Windows'
     - name: Setup msys minggw (windows)
+      shell: msys2 {0}
       run: makepkg-mingw -sCLfc --noconfirm
       if: runner.os == 'Windows'
     - name: Install libraries (windows)
