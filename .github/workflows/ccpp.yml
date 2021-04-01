@@ -157,7 +157,7 @@ jobs:
       if: runner.os == 'Windows'
     - name: Setup msys minggw (windows)
       shell: msys2 {0}
-      run: makepkg-mingw -sCLfc --noconfirm
+      run: updpkgsums && makepkg-mingw -sCLfc --noconfirm
       if: runner.os == 'Windows'
     - name: decrypt VTSDK (windows)
       run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}
