@@ -128,7 +128,8 @@ jobs:
       if: runner.os == 'macOS'
     - uses: msys2/setup-msys2@v2
       with:
-        path-type: inherit
+        msystem: MINGW64
+        path-type: minimal
         update: true
         install: >-
           git
@@ -152,30 +153,41 @@ jobs:
           mingw-w64-x86_64-libtool
           mingw-w64-x86_64-jq
           python
+          base-devel
       env:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      if: runner.os == 'Windows'
-    - name: Setup msys minggw (windows)
-      shell: msys2 {0}
-      run: updpkgsums && makepkg-mingw -sCLfc --noconfirm
+        ARCH_WIN: 1
+        ARCH_WIN_64: 1
       if: runner.os == 'Windows'
     - name: decrypt VTSDK (windows)
-      run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}'
       if: runner.os == 'Windows'
     - name: make dependencies (windows)
-      run: make dep -j4
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'make dep -j4'
       if: runner.os == 'Windows'
     - name: compile (windows)
-      run: make -j4
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'make -j4'
       if: runner.os == 'Windows'
     - name: compile all plugins (windows)
-      run: cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..'
       if: runner.os == 'Windows'
     - name: build VST bridge (windows)
-      run: cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && FX=1 make dist && cd ../..
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'cd Bridge/VST && unzip ../../vendor/vstsdk.zip -d . && mv vstsdk2.4 VST2_SDK && make dist && FX=1 make dist && cd ../..'
       if: runner.os == 'Windows' 
     - name: build package (windows)
-      run: make dist
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'make dist'
       if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
