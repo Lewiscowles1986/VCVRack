@@ -7,7 +7,7 @@ on:
     branches:
     - master
   schedule:
-    - cron: 0 6 * * *
+    - cron: 0 6 1 * *
 
 jobs:
   build:
@@ -60,6 +60,16 @@ jobs:
     - name: install openSSL (mac)
       run: brew update && brew install openssl@1.1 && brew install llvm
       if: runner.os == 'macOS'
+    - name: decrypt VTSDK (linux, mac)
+      env:
+        VSTSDK_KEY: ${{ secrets.vst_sdk_enckey }}
+      run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:$VSTSDK_KEY
+      if: runner.os != 'Windows'
+    - name: decrypt CoreAudio SDK (mac)
+      env:
+        CORE_AUDIO_SDK_KEY: ${{ secrets.core_audio_sdk_enckey }}
+      run: openssl aes-256-cbc -d -md sha512 -in vendor/CoreAudio2.zip.enc -out vendor/CoreAudio.zip -pass pass:$CORE_AUDIO_SDK_KEY
+      if: runner.os == 'macOS'
     - name: make dependencies (linux, mac)
       env:
         CC: ${{ matrix.cc }}
@@ -102,28 +112,63 @@ jobs:
         name: OSx
         path: dist/*.zip
       if: runner.os == 'macOS'
-    - uses: numworks/setup-msys2@v1
+    - uses: msys2/setup-msys2@v2
       with:
-        path-type: inherit
+        msystem: MINGW64
+        path-type: minimal
         update: true
+        install: >-
+          git
+          wget
+          make
+          tar
+          unzip
+          zip
+          mingw-w64-i686-toolchain
+          mingw-w64-i686-gcc
+          mingw-w64-i686-gdb
+          mingw-w64-i686-cmake
+          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-gdb
+          mingw-w64-x86_64-cmake
+          autoconf
+          automake
+          mingw-w64-i686-libtool
+          mingw-w64-i686-jq
+          mingw-w64-x86_64-libtool
+          mingw-w64-x86_64-jq
+          python
+          base-devel
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+        ARCH_WIN: 1
+        ARCH_WIN_64: 1
       if: runner.os == 'Windows'
-    - name: Setup msys minggw (windows)
-      run: msys2do makepkg-mingw -sCLfc --noconfirm
-      if: runner.os == 'Windows'
-    - name: Install libraries (windows)
-      run: msys2do pacman --noconfirm -Su git wget make tar unzip zip mingw-w64-x86_64-gcc mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake autoconf automake mingw-w64-x86_64-libtool mingw-w64-x86_64-jq python
+    - name: decrypt VTSDK (windows)
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}'
       if: runner.os == 'Windows'
     - name: make dependencies (windows)
-      run: msys2do make dep -j4
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'make dep -j4'
       if: runner.os == 'Windows'
     - name: compile (windows)
-      run: msys2do make -j4
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'make -j4'
       if: runner.os == 'Windows'
     - name: compile all plugins (windows)
-      run: cd plugins/Fundamental && msys2do make dep -j4 && msys2do make -j4 && cd ../..
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'cd plugins/Fundamental && make dep -j4 && make -j4 && cd ../..'
       if: runner.os == 'Windows'
     - name: build package (windows)
-      run: msys2do make dist
+      run: |
+        set MSYSTEM=MINGW64
+        msys2 -c 'make dist'
       if: runner.os == 'Windows'
     - uses: actions/upload-artifact@v2
       with:
