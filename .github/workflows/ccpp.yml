@@ -60,11 +60,6 @@ jobs:
     - name: install openSSL (mac)
       run: brew update && brew install openssl@1.1 && brew install llvm
       if: runner.os == 'macOS'
-    - name: decrypt VTSDK (linux, mac)
-      env:
-        VSTSDK_KEY: ${{ secrets.vst_sdk_enckey }}
-      run: openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:$VSTSDK_KEY
-      if: runner.os != 'Windows'
     - name: decrypt CoreAudio SDK (mac)
       env:
         CORE_AUDIO_SDK_KEY: ${{ secrets.core_audio_sdk_enckey }}
@@ -144,11 +139,6 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
         ARCH_WIN: 1
         ARCH_WIN_64: 1
-      if: runner.os == 'Windows'
-    - name: decrypt VTSDK (windows)
-      run: |
-        set MSYSTEM=MINGW64
-        msys2 -c 'openssl aes-256-cbc -d -md sha512 -in vendor/vstsdk.zip.enc -out vendor/vstsdk.zip -pass pass:${{ secrets.vst_sdk_enckey }}'
       if: runner.os == 'Windows'
     - name: make dependencies (windows)
       run: |
