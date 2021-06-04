@@ -236,7 +236,7 @@ $(osdialog): $(wildcard osdialog/*.h)
 	cp $^ include/
 
 jpommier-pffft-29e4f76ac53b:
-	$(WGET) "https://bitbucket.org/jpommier/pffft/get/29e4f76ac53b.zip"
+	$(WGET) "https://bitbucket.org/jpommier/pffft/get/29e4f76ac53b.zip" || $(WGET) "http://download.gaborator.com/mirror/pffft/29e4f76ac53b.zip"
 	$(SHA256) 29e4f76ac53b.zip bb10afba127904a0c6c553fa445082729b7d72373511bda1b12a5be0e03f318a
 	$(UNZIP) 29e4f76ac53b.zip
 	rm 29e4f76ac53b.zip
