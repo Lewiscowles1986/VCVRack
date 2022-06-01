@@ -111,7 +111,7 @@ $(libzip): $(zlib)
 	$(MAKE) -C libzip-1.2.0 install
 
 $(zlib):
-	$(WGET) "https://www.zlib.net/zlib-1.2.11.tar.gz"
+	$(WGET) "https://www.zlib.net/fossils/zlib-1.2.11.tar.gz"
 	$(UNTAR) zlib-1.2.11.tar.gz
 ifdef ARCH_WIN
 	$(MAKE) -C zlib-1.2.11 -f win32/Makefile.gcc
