@@ -1,0 +1,102 @@
+{
+    "plugins" : [
+	{
+	    "user" : "VCVRack",
+	    "repo" : "Fundamental"
+	},
+	{
+	    "user" : "RareBreeds",
+	    "repo" : "Orbits"
+	},
+	{
+	    "user" : "kockie69",
+	    "repo" : "SquinkyVCV-main"
+	},
+	{
+	    "user" : "MarcBoule",
+	    "repo" : "Geodesics"
+	},
+	{
+	    "user" : "VCVRack",
+	    "repo" : "AudibleInstruments"
+	},
+	{
+	    "user" : "VCVRack",
+	    "repo" : "Befaco"
+	},
+	{
+	    "user" : "algoritmarte",
+	    "repo" : "AlgoritmarteVCVPlugin",
+	    "branch" : "origin/v2"
+	},
+	{
+	    "user" : "bogaudio",
+	    "repo" : "BogaudioModules"
+	},
+	{
+	    "user" : "countmodula",
+	    "repo" : "VCVRackPlugins"
+	},
+	{
+	    "user" : "ValleyAudio",
+	    "repo" : "ValleyRackFree"
+	},
+	{
+	    "user" : "almostEric",
+	    "repo" : "FrozenWasteland"
+	},
+	{
+	    "user" : "MarcBoule",
+	    "repo" : "ImpromptuModular"
+	},
+	{
+	    "user" : "docb",
+	    "repo" : "dbRackSequencer"
+	},
+	{
+	    "user" : "starlingcode",
+	    "repo" : "Via-for-Rack"
+	},
+	{
+	    "user" : "CoffeeVCV",
+	    "repo" : "CoffeeVCV"
+	},
+	{
+	    "user" : "patheros",
+	    "repo" : "PathSetModules"
+	},
+	{
+	    "user" : "dbgrande",
+	    "repo" : "GrandeModular"
+	},
+	{
+	    "user" : "clone45",
+	    "repo" : "VoxGlitch"
+	},
+	{
+	    "user" : "Ahineya",
+	    "repo" : "vcv-myth-plugin"
+	},
+	{
+	    "user" : "alefnull",
+	    "repo" : "alefsbits"
+	},
+	{
+	    "user" : "alexey-komarov",
+	    "repo" : "fruitsofkarma-vcvrack"
+	},
+	{
+	    "user" : "Tonecarver",
+	    "repo" : "tcRackModules",
+	    "branch" : "origin/v2"
+	},
+	{
+	    "user" : "Ahornberg",
+	    "repo" : "Ahornberg-VCV-Modules"
+	},
+	{
+	    "user" : "firolightfog",
+	    "repo" : "Yolow"
+	}
+    ]
+}

@@ -6,6 +6,9 @@ ifneq (,$(findstring x86_64-,$(MACHINE)))
 else ifneq (,$(findstring i686-,$(MACHINE)))
 	ARCH_x86 := 1
 	ARCH_NAME := x86
+else ifneq (,$(findstring arm64-,$(MACHINE)))
+	ARCH_arm64 := 1
+	ARCH_NAME := arm64
 else
 $(error Could not determine CPU architecture of $(MACHINE). Try hacking around in arch.mk)
 endif

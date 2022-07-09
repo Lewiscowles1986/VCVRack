@@ -55,6 +55,7 @@ osdialog = include/osdialog.h
 pffft = include/pffft.h
 fuzzysearchdatabase = include/FuzzySearchDatabase.hpp
 ghcfilesystem = include/ghc/filesystem.hpp
+simde = include/simde/x86/sse3.h
 
 DEPS += $(glew)
 DEPS += $(glfw)
@@ -72,6 +73,7 @@ DEPS += $(osdialog)
 DEPS += $(pffft)
 DEPS += $(fuzzysearchdatabase)
 DEPS += $(ghcfilesystem)
+DEPS += $(simde)
 
 
 DEP_LOCAL := .
@@ -171,7 +173,9 @@ speexdsp-SpeexDSP-1.2rc3:
 	rm speexdsp-SpeexDSP-1.2rc3.tgz
 
 $(libspeexdsp): | speexdsp-SpeexDSP-1.2rc3
-	cd speexdsp-SpeexDSP-1.2rc3 && $(CONFIGURE)
+	# Disable neon even on Arm builds as speexdsp doesn't support compiling for arch64
+	# https://stackoverflow.com/questions/54581564/compiling-speex-and-speexdsp-for-android-64bit-architectures-results-in-error
+	cd speexdsp-SpeexDSP-1.2rc3 && $(CONFIGURE) --disable-neon
 	$(MAKE) -C speexdsp-SpeexDSP-1.2rc3
 	$(MAKE) -C speexdsp-SpeexDSP-1.2rc3 install
 
@@ -252,6 +256,10 @@ $(fuzzysearchdatabase): fuzzysearchdatabase/src/FuzzySearchDatabase.hpp
 	cp $^ include/
 
 $(ghcfilesystem): filesystem/include/ghc
+	mkdir -p include
+	cp -r $^ include/
+
+$(simde): simde/simde
 	mkdir -p include
 	cp -r $^ include/
 

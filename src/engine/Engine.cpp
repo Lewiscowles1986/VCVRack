@@ -5,7 +5,7 @@
 #include <mutex>
 #include <atomic>
 #include <tuple>
-#include <pmmintrin.h>
+#include <simde/x86/sse3.h>
 
 #include <engine/Engine.hpp>
 #include <settings.hpp>
@@ -22,12 +22,15 @@ namespace engine {
 
 
 static void initMXCSR() {
+// TODO: Set floating point modes for ARM
+#ifndef ARCH_arm64
 	// Set CPU to flush-to-zero (FTZ) and denormals-are-zero (DAZ) mode
 	// https://software.intel.com/en-us/node/682949
 	_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
 	_MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 	// Reset other flags
 	_MM_SET_ROUNDING_MODE(_MM_ROUND_NEAREST);
+#endif
 }
 
 
@@ -92,7 +95,12 @@ struct SpinBarrier {
 		while (true) {
 			if (step.load(std::memory_order_relaxed) != s)
 				return;
+#if ARCH_arm64
+			asm volatile("yield");
+#else
 			__builtin_ia32_pause();
+#endif
+
 		}
 	}
 };
@@ -139,7 +147,11 @@ struct HybridBarrier {
 		while (!yielded.load(std::memory_order_relaxed)) {
 			if (step.load(std::memory_order_relaxed) != s)
 				return;
+#if ARCH_arm64
+			asm volatile("yield");
+#else
 			__builtin_ia32_pause();
+#endif
 		}
 
 		// Wait on mutex CV
@@ -529,7 +541,7 @@ void Engine::stepBlock(int frames) {
 	std::lock_guard<std::mutex> stepLock(internal->blockMutex);
 	SharedLock<SharedMutex> lock(internal->mutex);
 	// Configure thread
-	uint32_t csr = _mm_getcsr();
+	uint32_t csr = simde_mm_getcsr();
 	initMXCSR();
 	random::init();
 
@@ -574,7 +586,7 @@ void Engine::stepBlock(int frames) {
 	}
 
 	// Reset MXCSR back to original value
-	_mm_setcsr(csr);
+	simde_mm_setcsr(csr);
 }
 
 

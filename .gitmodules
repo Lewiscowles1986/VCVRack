@@ -34,3 +34,6 @@
 [submodule "dep/rtmidi"]
 	path = dep/rtmidi
 	url = https://github.com/VCVRack/rtmidi.git
+[submodule "dep/simde"]
+	path = dep/simde
+	url = https://github.com/simd-everywhere/simde.git
