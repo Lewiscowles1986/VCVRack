@@ -8,7 +8,11 @@ The Rack source code and its plugins are separate, this port does not contain an
 
 An Apple Silicon build of Rack will not be able to load Mac plugins that have been built for x86.
 
-There is a build script (./buid-rack.py) that will pull some open source modules (defined in modules.json) from github and try to build them. Not all of these modules successfully compile natively for Apple Silicon. Typically if any of the module developers had gone to the effort of vectorising their modules, they won't compile without being ported to also support neon or a portable vector library like simde.
+There is a build script (./build-rack.py) that will pull some open source modules (defined in modules.json) from github and try to build them. Not all of these modules successfully compile natively for Apple Silicon. Typically if any of the module developers had gone to the effort of vectorising their modules, they won't compile without being ported to also support neon or a portable vector library like simde.
+Open source plugins in the module list that I know don't compile are unfortunately:
+* ValleyRackFree
+* AudibleInstruments
+* SquinkyVCV-main
 
 The vector code in Rack was the main difficulty in getting it building and running, this has been patched to use the simde library.
 
@@ -18,6 +22,8 @@ There are a few hacks in this port that might affect the behaviour / performance
 * Non-vectorized speexdsp - This dependency doesn't support compiling for aarch64 NEON, so the --disable-neon flag has been added which I imagine means the Apple Silicon vector units are not being utilized as much as they can, hampering performance
 
 Note that this port will also build and run for x86 like the original Rack source it's based on.
+
+... Copy of the VCV Rack README.md follows.
 
 # VCV Rack
 
