@@ -21,6 +21,10 @@ LDFLAGS += -shared
 # Plugins must link to libRack because when Rack is used as a plugin of another application, its symbols are not available to subsequently loaded shared libraries.
 LDFLAGS += -L$(RACK_DIR) -lRack
 
+ifdef ARCH_ARM
+	FLAGS += -DARCH_ARM
+endif
+
 include $(RACK_DIR)/arch.mk
 
 ifdef ARCH_LIN

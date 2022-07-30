@@ -20,6 +20,18 @@ FLAGS += -Wall -Wextra -Wno-unused-parameter
 # C++ standard
 CXXFLAGS += -std=c++11
 
+# CPU architecture set.
+ifdef ARCH_ARM_APPLE
+	FLAGS += -mcpu=apple-m1
+else
+	FLAGS += -march=nehalem
+endif
+
+# Set arm architecture to switch sse instructions to use sse2neon.h
+ifdef ARCH_ARM
+	FLAGS += -DARCH_ARM
+endif
+
 # Architecture-independent flags
 ifdef ARCH_LIN
 	FLAGS += -DARCH_LIN

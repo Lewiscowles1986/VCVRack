@@ -56,8 +56,10 @@ ifdef ARCH_MAC
 
 	STANDALONE_TARGET := Rack
 	STANDALONE_LDFLAGS += -stdlib=libc++
-	# For LuaJIT to work inside plugins
-	STANDALONE_LDFLAGS += -Wl,-pagezero_size,10000 -Wl,-image_base,100000000
+	# TODO: On apple m1 compilation fails with these flags. Needs more investigation.
+	ifndef ARCH_ARM_APPLE
+		STANDALONE_LDFLAGS += -Wl,-pagezero_size,10000 -Wl,-image_base,100000000
+	endif
 endif
 
 ifdef ARCH_WIN

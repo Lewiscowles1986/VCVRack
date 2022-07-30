@@ -5,10 +5,17 @@ DEP_LOCAL ?= dep
 $(shell mkdir -p $(DEP_LOCAL))
 DEP_PATH := $(abspath $(DEP_LOCAL))
 
-DEP_FLAGS += -g -O3 -march=nehalem
+DEP_FLAGS += -g -O3 
 # This is needed for Rack for DAWs.
 # Static libs don't usually compiled with -fPIC, but since we're including them in a shared library, it's needed.
 DEP_FLAGS += -fPIC
+
+# CPU architecture detect
+ifdef ARCH_ARM_APPLE
+	DEP_FLAGS += -mcpu=apple-m1
+else
+	DEP_FLAGS += -march=nehalem
+endif
 
 ifdef ARCH_MAC
 	DEP_MAC_SDK_FLAGS := -mmacosx-version-min=10.9
@@ -23,7 +30,12 @@ DEP_CXXFLAGS += $(DEP_FLAGS)
 WGET := wget -c
 UNTAR := tar xf
 UNZIP := unzip -o
-CONFIGURE := ./configure --prefix="$(DEP_PATH)" --host=$(MACHINE)
+CONFIGURE := ./configure --prefix="$(DEP_PATH)"
+
+# Apple M1 does not support --host argument for some reason
+ifndef ARCH_ARM_APPLE
+	CONFIGURE += --host=$(MACHINE)
+endif
 
 ifdef ARCH_WIN
 	CMAKE := cmake -G 'MSYS Makefiles' -DCMAKE_INSTALL_PREFIX="$(DEP_PATH)"

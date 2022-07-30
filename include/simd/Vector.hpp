@@ -1,6 +1,11 @@
 #pragma once
 #include <cstring>
-#include <pmmintrin.h>
+
+#ifdef ARCH_ARM
+	#include <sse2neon/sse2neon.h>
+#else
+	#include <pmmintrin.h>
+#endif
 
 
 namespace rack {

@@ -55,6 +55,8 @@ osdialog = include/osdialog.h
 pffft = include/pffft.h
 fuzzysearchdatabase = include/FuzzySearchDatabase.hpp
 ghcfilesystem = include/ghc/filesystem.hpp
+sse2neon = include/sse2neon/sse2neon.h
+
 
 DEPS += $(glew)
 DEPS += $(glfw)
@@ -72,6 +74,7 @@ DEPS += $(osdialog)
 DEPS += $(pffft)
 DEPS += $(fuzzysearchdatabase)
 DEPS += $(ghcfilesystem)
+DEPS += $(sse2neon)
 
 
 DEP_LOCAL := .
@@ -164,6 +167,11 @@ $(libarchive): | $(zstd) libarchive-3.4.3
 	$(MAKE) -C libarchive-3.4.3/build
 	$(MAKE) -C libarchive-3.4.3/build install
 
+SPEEXDSP_CONFIGURE_FLAGS := ""
+ifdef ARCH_ARM_APPLE
+	SPEEXDSP_CONFIGURE_FLAGS += -disable-neon
+endif
+
 speexdsp-SpeexDSP-1.2rc3:
 	$(WGET) "https://vcvrack.com/downloads/dep/speexdsp-SpeexDSP-1.2rc3.tgz"
 	$(SHA256) speexdsp-SpeexDSP-1.2rc3.tgz c8dded1454747f65956f981c95e7f89a06abdaa2a53e8aeaa66bab2a3d59cebd
@@ -171,7 +179,7 @@ speexdsp-SpeexDSP-1.2rc3:
 	rm speexdsp-SpeexDSP-1.2rc3.tgz
 
 $(libspeexdsp): | speexdsp-SpeexDSP-1.2rc3
-	cd speexdsp-SpeexDSP-1.2rc3 && $(CONFIGURE)
+	cd speexdsp-SpeexDSP-1.2rc3 && $(CONFIGURE) $(SPEEXDSP_CONFIGURE_FLAGS)
 	$(MAKE) -C speexdsp-SpeexDSP-1.2rc3
 	$(MAKE) -C speexdsp-SpeexDSP-1.2rc3 install
 
@@ -254,6 +262,10 @@ $(fuzzysearchdatabase): fuzzysearchdatabase/src/FuzzySearchDatabase.hpp
 $(ghcfilesystem): filesystem/include/ghc
 	mkdir -p include
 	cp -r $^ include/
+
+$(sse2neon): sse2neon/sse2neon.h
+	mkdir -p include/sse2neon
+	cp -r $^ include/sse2neon
 
 # Helpers
 

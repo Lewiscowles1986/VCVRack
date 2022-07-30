@@ -8,6 +8,7 @@
 *.d
 *.dSYM
 *.vcvplugin
+*.vscode
 
 /Rack
 /dep

@@ -110,7 +110,7 @@ static void initUserDir() {
 	// Get home directory
 	struct passwd* pw = getpwuid(getuid());
 	assert(pw);
-	userDir = system::join(pw->pw_dir, "Documents", "Rack" + APP_VERSION_MAJOR);
+	userDir = system::join(pw->pw_dir, "Documents", "Rack" + APP_VERSION_MAJOR + "M1");
 #endif
 #if defined ARCH_LIN
 	// Get home directory

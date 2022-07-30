@@ -5,7 +5,12 @@
 #include <mutex>
 #include <atomic>
 #include <tuple>
-#include <pmmintrin.h>
+
+#ifdef ARCH_ARM
+	#include <sse2neon/sse2neon.h>
+#else
+	#include <pmmintrin.h>
+#endif
 
 #include <engine/Engine.hpp>
 #include <settings.hpp>
@@ -64,6 +69,13 @@ struct Barrier {
 	}
 };
 
+void pause() {
+	#ifdef ARCH_ARM
+		asm volatile("yield");
+	#else
+		__builtin_ia32_pause();
+	#endif
+}
 
 /** 2-phase barrier based on spin-locking.
 */
@@ -92,7 +104,7 @@ struct SpinBarrier {
 		while (true) {
 			if (step.load(std::memory_order_relaxed) != s)
 				return;
-			__builtin_ia32_pause();
+			pause();
 		}
 	}
 };
@@ -139,7 +151,7 @@ struct HybridBarrier {
 		while (!yielded.load(std::memory_order_relaxed)) {
 			if (step.load(std::memory_order_relaxed) != s)
 				return;
-			__builtin_ia32_pause();
+			pause();
 		}
 
 		// Wait on mutex CV
