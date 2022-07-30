@@ -43,7 +43,11 @@ This derived source file is released under the zlib license.
   (this is the zlib license)
 */
 #pragma once
-#include <pmmintrin.h>
+#ifdef ARCH_ARM
+	#include <sse2neon/sse2neon.h>
+#else
+	#include <pmmintrin.h>
+#endif
 
 
 /** Generate 1.f without accessing memory */
